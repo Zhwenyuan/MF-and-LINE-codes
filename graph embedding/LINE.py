@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import datetime
-import pre_process
+from pre_process import getMatrixFromFile
 
 
 class LINE(nn.Module):
@@ -23,7 +23,7 @@ def train():
     print("%d: %d: %d\n" % (curtime.hour, curtime.minute, curtime.second))
     print("initializing relationmap...")
 
-    relationmap, arr1, arr2 = pre_process.getMatrixFromFile()
+    relationmap, arr1, arr2 = getMatrixFromFile()
     print("relationmap initializing completed.\n")
 
     print("utilizing graph embedding...\nlearning rate = 1e-3, latent factors = 10\n")
