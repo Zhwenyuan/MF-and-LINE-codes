@@ -49,8 +49,6 @@ def getMatrixFromFile():
             break
         relationmap[fans_dict[strlist[1]], shopkeepers_dict[strlist[0]]] = 1
 
-
-
     return relationmap, fans_dict, shopkeepers_dict
 
 if __name__ == '__main__':
