@@ -1,26 +1,57 @@
 import numpy as np
 
-
 def getMatrixFromFile():
     f = open('.\\beidian_shopkeepers_and_fans_filted_1_2_zyx.txt', 'r')
+    textStr = f.read()
+    f.close()
+    lines = textStr.split('\n')
+
+    # select 1000*1000 from dataset
+    # lines = lines[:1000]
+
     fans = set()
-    shopkeeperes = set()
-    for line in f:
+    shopkeepers = set()
+    for line in lines:
         strlist = line.split('\t')
+        if strlist.__len__() != 2:
+            break
         fans.add(strlist[1])
-        shopkeeperes.add((strlist[0]))
+        shopkeepers.add((strlist[0]))
 
     fans = list(fans)
-    shopkeeperes = list(shopkeeperes)
-    relationmap = np.zeros([fans.__len__(), shopkeeperes.__len__()], dtype=np.uint8)
+    shopkeepers = list(shopkeepers)
 
+    # each key is uid or pid, each value is uid's index in matrix
+    fans_dict = dict()
+    shopkeepers_dict = dict()
+    for i in range(fans.__len__()):
+        fans_dict.update({fans[i]: i})
+    for j in range(shopkeepers.__len__()):
+        shopkeepers_dict.update({shopkeepers[j]: j})
+
+    # write relationmap to file
+    file = open("relationMap.txt", 'w')
+    for l in lines:
+        strlist = l.split('\t')
+        if strlist.__len__() != 2:
+            break
+        file.write(str(shopkeepers_dict[strlist[0]]))
+        file.write("::")
+        file.write(str(fans_dict[strlist[1]]))
+        file.write("::1\n")
+    file.close()
+
+    relationmap = np.zeros([fans.__len__(), shopkeepers.__len__()])
     count = 0
-    for line in f:
-        count += 1
-        if(count%1000==0):
-            print("loop:{}".format(count))
-        strlist = line.split('\t')
-        if strlist[0] in shopkeeperes and strlist[1] in fans:
-            relationmap[fans.index(strlist[1]), shopkeeperes.index(strlist[0])] = 1
+    for _line in lines:
+        strlist = _line.split('\t')
+        if strlist.__len__() != 2:
+            break
+        relationmap[fans_dict[strlist[1]], shopkeepers_dict[strlist[0]]] = 1
 
-    return relationmap, fans, shopkeeperes
+
+
+    return relationmap, fans_dict, shopkeepers_dict
+
+if __name__ == '__main__':
+    getMatrixFromFile()

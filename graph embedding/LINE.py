@@ -23,40 +23,39 @@ def train():
     print("%d: %d: %d\n" % (curtime.hour, curtime.minute, curtime.second))
     print("initializing relationmap...")
 
-    relationmap, arr1, arr2 = getMatrixFromFile()
+    relationmap, fans_dict, shopkeepers_dict = getMatrixFromFile()
     print("relationmap initializing completed.\n")
 
-    print("utilizing graph embedding...\nlearning rate = 1e-3, latent factors = 10\n")
+    print("initializing model and loss function...")
     # select nonzero rows and cols
     rows, cols = relationmap.nonzero()
-    p = np.random.permutation(len(rows))
-    rows, cols = rows[p[:10000]], cols[p[:10000]]
-
     n_fans, n_shopkeepers = relationmap.shape
+
+    # initialize model, weights, loss function, optimizer, targets
     model = LINE(n_fans, n_shopkeepers, n_factors=10)
-    weights = torch.sparse.FloatTensor(torch.tensor(rows), torch.tensor(cols))
+    weights = torch.sparse.FloatTensor(torch.LongTensor([rows, cols]), torch.ones(rows.__len__()), (n_fans, n_shopkeepers)).to_dense()
     loss_func = nn.BCELoss(weight=weights, reduce=True, size_average=False)
     optimizer = torch.optim.ASGD(model.parameters(), lr=1e-3)
-    targets = torch.tensor(relationmap, dtype=torch.float)
+    targets = torch.sparse.FloatTensor(torch.LongTensor([rows, cols]), torch.ones(rows.__len__()), (n_fans, n_shopkeepers)).to_dense()
+    print("initializing completed.\n")
 
-
-    for i in range(500):
+    print("utilizing graph embedding...\nlearning rate = 1e-3, latent factors = 10\n")
+    for i in range(5000):
         print("iteration is %d now." % i)
-
-        optimizer.zero_grad()
-        output = model(rows, cols)
-        loss = loss_func(output, targets)
-        loss.backward()
-        optimizer.step()
+        optimizer.zero_grad()       # clear grad
+        output = model(n_fans, n_shopkeepers)       # calculate forward
+        loss = loss_func(output, targets)           # calculate loss function
+        loss.backward()         # calculate backward
+        optimizer.step()        # one step
 
     print("graph embedding completed.\n")
 
     print("calculating Error...")
 
-    result = model(rows, cols)
+    result = model(n_fans, n_shopkeepers)
     sum = 0
     for row, col in zip(rows, cols):
-        sum += np.square(result[row, col] - relationmap[row, col])
+        sum += np.square(result[row, col].detach().numpy() - relationmap[row, col])
     print("now Error is {}".format(sum))
 
     curtime = datetime.datetime.now()
